@@ -35,7 +35,7 @@ This project calculates and visualizes the Forest Health Index (FHI) and Stand H
 - NDVI formula: `(B8 - B4) / (B8 + B4)`.
 - QA60 cloud masking applied.
 - Monthly median NDVI computed and exported to Google Drive.
-- **Script:** [`GEE_Code.txt`](./GEE_Code.txt)【90†source】.
+- **Script:** [`GEE_Code.txt`](./GEE_Code.txt).
 
 ### 3. **Local Data Processing in Python**
 - Load CSV from Google Drive export.
@@ -73,7 +73,7 @@ Example June 2025 category ranges:
 |--------------------|--------|--------|
 | Severely Stressed  | 0.5609 | 0.5825 |
 | Stressed           | 0.5842 | 0.6093 |
-| Slightly Stressed  | 0.6115 | 0.6603 |
+| Slightly Stressed  | 0.6115 | 0.6603 |  
 | Moderately Healthy | 0.6609 | 0.7115 |
 | Healthy            | 0.7121 | 0.7366 |
 | Very Healthy       | 0.7377 | 0.7804 |
@@ -93,6 +93,6 @@ Example June 2025 category ranges:
 ---
 
 ## References
-- Dash, 2018 — *UAV Multispectral Imagery for Forest Health Monitoring*【91†source】
-- Das, 2024 — *Modeling Forest Canopy Structure and Stand Health Index*【91†source】
+- Dash, 2018 — *UAV Multispectral Imagery for Forest Health Monitoring*
+- Das, 2024 — *Modeling Forest Canopy Structure and Stand Health Index*
 
