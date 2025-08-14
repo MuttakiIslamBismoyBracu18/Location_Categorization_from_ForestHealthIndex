@@ -1,0 +1,58 @@
+// ===== 0) Inputs =====
+var aoi = ee.FeatureCollection("projects/ee-bismoyobak/assets/DuncanGrid");
+var startDate = ee.Date('2018-01-01');
+var endDate   = ee.Date('2025-07-31');
+
+function maskS2clouds(img) {
+  var qa = img.select('QA60');
+  var cloudBitMask = 1 << 10;
+  var cirrusBitMask = 1 << 11;
+  var mask = qa.bitwiseAnd(cloudBitMask).eq(0)
+               .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+  return img.updateMask(mask).copyProperties(img, img.propertyNames());
+}
+
+// Build S2 collection
+var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+  .filterBounds(aoi)
+  .filterDate(startDate, endDate)
+  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 60)) // looser filter
+  .map(maskS2clouds)
+  .map(function(img) {
+    return img.normalizedDifference(['B8','B4']).rename('NDVI')
+              .copyProperties(img, img.propertyNames());
+  });
+
+var months = ee.List.sequence(0, endDate.difference(startDate, 'month').subtract(1));
+
+var monthly = ee.ImageCollection(
+  months.map(function(n) {
+    var mStart = startDate.advance(n, 'month');
+    var mEnd   = mStart.advance(1, 'month');
+    var ic = s2.filterDate(mStart, mEnd);
+    return ee.Image(ee.Algorithms.If(
+      ic.size().gt(0),
+      ic.median().set('system:time_start', mStart.millis()),
+      ee.Image.constant(-9999).rename('NDVI')
+        .updateMask(ee.Image(1)) // ensure band exists
+        .set('system:time_start', mStart.millis())
+    ));
+  })
+);
+
+var tableOut = monthly.map(function(img) {
+  return img.reduceRegions({
+      collection: aoi,
+      reducer: ee.Reducer.mean().setOutputs(['NDVI_mean']),
+      scale: 10
+    })
+    .map(function(f) {
+      return f.set('date', ee.Date(img.get('system:time_start')).format('YYYY-MM'));
+    });
+}).flatten();
+
+Export.table.toDrive({
+  collection: tableOut,
+  description: 'DuncanWoods_NDVI_mean_2024_2025_fixed',
+  fileFormat: 'CSV'
+});
