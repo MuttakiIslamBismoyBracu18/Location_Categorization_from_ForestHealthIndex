@@ -30,6 +30,118 @@ This project calculates and visualizes the Forest Health Index (FHI) and Stand H
 5. Save as `Duncan_woods_1acre_grid.shp`.
 6. Upload shapefile to GEE assets.
 
+# Forest Boundary and 1-Acre Grid Creation in QGIS
+
+This document provides a **step-by-step guide** for creating a shapefile (`.shp`) of a forest boundary in QGIS, generating a **1-acre grid**, and ensuring that all associated shapefile components (`.cpg`, `.dbf`, `.prj`, `.shx`) are exported correctly.
+
+---
+
+## 🛠️ Requirements
+- Install [QGIS](https://qgis.org) (Free & Open Source)
+- Install the **QuickMapServices** plugin for base maps (satellite/OSM)
+
+---
+
+## 📍 Step 1: Open QGIS and Set Up a Basemap
+1. Launch **QGIS**.  
+2. Add a base map for reference:  
+   - `Web → QuickMapServices → OSM` or `Google Satellite`.  
+   - If QMS is not installed: `Plugins → Manage → Search for "QuickMapServices"` and install it.
+
+---
+
+## 🧱 Step 2: Create a New Shapefile Layer
+1. Go to: `Layer → Create Layer → New Shapefile Layer…`  
+2. Set parameters:
+   - **Type**: Polygon  
+   - **CRS**: Choose appropriate UTM (e.g., EPSG:32616 for West Michigan)  
+   - **File name**: `Duncan_Woods.shp`  
+   - Add optional fields (e.g., `Name` as Text)  
+3. Click **OK** and save the new shapefile.
+
+---
+
+## ✏️ Step 3: Digitize the Forest Boundary
+1. In the Layers Panel, select the new shapefile.  
+2. Enter editing mode: click the **pencil icon 📝** (Toggle Editing).  
+3. Use **Add Polygon Feature** tool to draw the forest boundary by clicking around it.  
+   - Double-click to finish.  
+   - Enter an ID or name when prompted.  
+4. Adjust vertices with the Vertex Tool if needed.  
+
+---
+
+## 💾 Step 4: Save and Finish
+1. Click the floppy disk icon 💾 → Save Layer Edits.  
+2. Toggle off editing mode.  
+3. You now have a polygon `.shp` file defining your forest boundary.
+
+---
+
+## 📤 Optional: Export to Other Formats
+Right-click the layer → `Export → Save Features As…`  
+- Export to `.geojson`, `.kml`, `.csv`, etc., if needed for Google Earth Engine or Python workflows.
+
+---
+
+## 🌲 Step 5: Generate 1-Acre Grid
+1 acre ≈ **63.6 m × 63.6 m**  
+
+### Method in QGIS:
+1. Go to: `Vector → Research Tools → Create Grid`.  
+2. Parameters:
+   - **Grid type**: Rectangle (Polygon)  
+   - **Extent**: Select your forest boundary layer  
+   - **Grid spacing**: 63.6 m (X and Y)  
+   - **CRS**: Same as boundary layer (UTM projection)  
+   - **Output**: Save as `Duncan_Woods_Grid.shp`  
+3. Clip the grid to boundary:  
+   - `Vector → Geoprocessing Tools → Clip`  
+   - Input: grid  
+   - Overlay: forest boundary  
+   - Save output: `Duncan_Woods_1AcreGrid.shp`
+
+---
+
+## 🔑 Step 6: Add Cell Identifiers
+1. Open the Attribute Table of the clipped grid.  
+2. Use **Field Calculator** → Create new field: `cell_id`.  
+3. Expression: `$rownum` (auto-assigns unique ID to each 1-acre polygon cell).  
+
+---
+
+## 🐍 Step 7: Code Example to Automate in Python
+You can also create the **1-acre grid** programmatically using PyQGIS:
+
+```python
+from qgis.core import QgsVectorLayer, QgsProcessingFeatureSourceDefinition, QgsProcessingFeedback
+import processing
+
+# Load boundary
+boundary = QgsVectorLayer("Duncan_Woods.shp", "boundary", "ogr")
+
+# Create grid (63.6m ~ 1 acre)
+params = {
+    'TYPE': 2,  # Rectangle
+    'EXTENT': boundary.extent(),
+    'HSPACING': 63.6,
+    'VSPACING': 63.6,
+    'HOVERLAY': 0,
+    'VOVERLAY': 0,
+    'CRS': boundary.crs(),
+    'OUTPUT': "Duncan_Woods_Grid.shp"
+}
+processing.run("qgis:creategrid", params)
+
+# Clip to boundary
+params_clip = {
+    'INPUT': "Duncan_Woods_Grid.shp",
+    'OVERLAY': QgsProcessingFeatureSourceDefinition(boundary.source(), True),
+    'OUTPUT': "Duncan_Woods_1AcreGrid.shp"
+}
+processing.run("qgis:clip", params_clip)
+
+
 ### 2. **GEE NDVI Extraction**
 - Uses Sentinel-2 Level-2A imagery.
 - NDVI formula: `(B8 - B4) / (B8 + B4)`.
