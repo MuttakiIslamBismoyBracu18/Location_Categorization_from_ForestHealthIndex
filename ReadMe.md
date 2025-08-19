@@ -111,36 +111,7 @@ Right-click the layer → `Export → Save Features As…`
 ---
 
 ## 🐍 Step 7: Code Example to Automate in Python
-You can also create the **1-acre grid** programmatically using PyQGIS:
-
-```python
-from qgis.core import QgsVectorLayer, QgsProcessingFeatureSourceDefinition, QgsProcessingFeedback
-import processing
-
-# Load boundary
-boundary = QgsVectorLayer("Duncan_Woods.shp", "boundary", "ogr")
-
-# Create grid (63.6m ~ 1 acre)
-params = {
-    'TYPE': 2,  # Rectangle
-    'EXTENT': boundary.extent(),
-    'HSPACING': 63.6,
-    'VSPACING': 63.6,
-    'HOVERLAY': 0,
-    'VOVERLAY': 0,
-    'CRS': boundary.crs(),
-    'OUTPUT': "Duncan_Woods_Grid.shp"
-}
-processing.run("qgis:creategrid", params)
-
-# Clip to boundary
-params_clip = {
-    'INPUT': "Duncan_Woods_Grid.shp",
-    'OVERLAY': QgsProcessingFeatureSourceDefinition(boundary.source(), True),
-    'OUTPUT': "Duncan_Woods_1AcreGrid.shp"
-}
-processing.run("qgis:clip", params_clip)
-
+You can also create the **1-acre grid** programmatically using PyQGIS: **Script:** [`One_Acre.py`](./One_Acre.py)
 
 ### 2. **GEE NDVI Extraction**
 - Uses Sentinel-2 Level-2A imagery.
